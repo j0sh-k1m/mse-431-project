@@ -86,8 +86,8 @@ P = P / P.sum(axis=1, keepdims=True)
 df = pd.DataFrame(P, index=STATES, columns=STATES)
 
 # Name of CSV FILE to output to
-FILE_NAME = "threshold-mc.csv"
-df.to_csv(f'markov-chains/{FILE_NAME}-{MAX_VOLUME}')
-print(f"Saved as markov-chains/{FILE_NAME}-{MAX_VOLUME}")
+FILE_NAME = f"threshold-{MAX_VOLUME}-mc.csv"
+df.to_csv(f'markov-chains/{FILE_NAME}')
+print(f"Saved as markov-chains/{FILE_NAME}")
 
 
