@@ -41,33 +41,40 @@ def compute_probability_distribution(max_order_quantity, components, volumes, po
             prob_dist[vol] = prob_dist.get(vol, 0) + poisson_probs[i] * prob
     return prob_dist
 
-def build_transition_matrix(states, max_volume, prob_dist):
-    """
-    Builds the transition matrix P where rows correspond to the current state (inventory)
-    and columns to the next state after adding production (with carryover if over capacity).
-    """
-    num_states = len(states)
+def build_transition_matrix(states, max_volume, prob_dist, carry_over: bool):
+    # Modify states based on carry_over condition:
+    # modified_states = states if carry_over else states[:-1]
+    modified_states = states[:-1]
+    num_states = len(modified_states)
     P = np.zeros((num_states, num_states))
 
-    for i, state in enumerate(states):
+    for i, state in enumerate(modified_states):
         for vol, prob in prob_dist.items():
             new_volume = state + vol
-            # Special rule: if you're at full capacity and get zero additional volume,
-            # then you ship out all inventory (go to state 0)
-            if state == max_volume and vol == 0:
-                j = np.searchsorted(states, 0)
-            elif new_volume > max_volume:
-                carry_over = new_volume - max_volume
-                j = np.searchsorted(states, carry_over)
+
+            if carry_over:
+                if state == max_volume and vol == 0:
+                    j = np.searchsorted(modified_states, 0)
+                elif new_volume >= max_volume:
+                    extra = new_volume - max_volume
+                    j = np.searchsorted(modified_states, extra)
+                else:
+                    j = np.searchsorted(modified_states, new_volume)
             else:
-                j = np.searchsorted(states, new_volume)
+                if new_volume >= max_volume:
+                    j = 0
+                else:
+                    j = np.searchsorted(modified_states, new_volume)
             P[i, j] += prob
 
-    return P / P.sum(axis=1, keepdims=True)  # Normalize rows
+    # Normalize rows
+    P = P / P.sum(axis=1, keepdims=True)
+    return P, modified_states # Normalize rows
 
-def generate_markov_chain(lambda_poisson, max_order_quantity, components, max_volume, step, file_path):
+def generate_markov_chain(lambda_poisson, max_order_quantity, components, max_volume, step, file_path, carry_over: bool):
     """
     Generates the Markov transition matrix and saves it as a CSV file.
+    :param carry_over: Boolean whether to consider carry over probabilities
     :param lambda_poisson: λ for the Poisson process.
     :param max_order_quantity: Maximum number of orders per period.
     :param components: Dictionary mapping component volumes to their probabilities.
@@ -79,31 +86,33 @@ def generate_markov_chain(lambda_poisson, max_order_quantity, components, max_vo
     volumes = list(components.keys())
     states = np.arange(0, max_volume + step, step)
 
-    # Use max_order_quantity for computing Poisson probabilities.
     poisson_probs = compute_poisson_probabilities(lambda_poisson, max_order_quantity)
     prob_dist = compute_probability_distribution(max_order_quantity, components, volumes, poisson_probs)
-    P = build_transition_matrix(states, max_volume, prob_dist)
 
+    P, modified_states = build_transition_matrix(states, max_volume, prob_dist, carry_over=carry_over)
+
+    # Verify that row sums are 1
     row_sums = np.sum(P, axis=1)
     tolerance = 1e-8
     for i, s in enumerate(row_sums):
         if not np.isclose(s, 1.0, atol=tolerance):
             raise ValueError(f"Row {i} should have sum of 1 but got: {s}")
 
-    df = pd.DataFrame(P, index=states, columns=states)
+    df = pd.DataFrame(P, index=modified_states, columns=modified_states)
     df.to_csv(file_path)
     print(f"Saved as {file_path}")
 
-    return P, states
+    return P, modified_states
 
 # Example usage:
-THRESHOLD = 1800
+THRESHOLD = 700
 if __name__ == "__main__":
-    P, states = generate_markov_chain(
+    mat, sts = generate_markov_chain(
         lambda_poisson=2,
-        max_order_quantity=3,  # Orders 0, 1, 2 and tail for >=3 orders.
+        max_order_quantity=3,
         components={50: 0.3, 100: 0.5, 150: 0.2},
         max_volume=THRESHOLD,
         step=50,
-        file_path=f'markov-chains/threshold-{THRESHOLD}-mc.csv'
+        file_path=f'markov-chains/threshold2-{THRESHOLD}-mc.csv',
+        carry_over=False,
     )
