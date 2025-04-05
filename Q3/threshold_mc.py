@@ -43,7 +43,6 @@ def compute_probability_distribution(max_order_quantity, components, volumes, po
 
 def build_transition_matrix(states, max_volume, prob_dist, carry_over: bool):
     # Modify states based on carry_over condition:
-    # modified_states = states if carry_over else states[:-1]
     modified_states = states[:-1]
     num_states = len(modified_states)
     P = np.zeros((num_states, num_states))
