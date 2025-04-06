@@ -106,7 +106,7 @@ if __name__ == '__main__':
         hc_factor=HOLDING_COST_FACTOR,
     )
 
-    print("3PL", total_costs_3pl, "\n\n\n\n", "Truck", total_costs_trucks)
+    # print("3PL", total_costs_3pl, "\n\n\n\n", "Truck", total_costs_trucks)
 
     # GRAPH
     x_3pl = list(total_costs_3pl.keys())
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     plt.plot(x_3pl, y_3pl, marker='o', linestyle='-', color='blue', label='3PL Costs (HCF=0.54)')
 
     # Plot Truck costs
-    plt.plot(x_truck, y_truck, marker='s', linestyle='--', color='red', label='Truck Costs (HCF=0.54)')
+    # plt.plot(x_truck, y_truck, marker='s', linestyle='--', color='red', label='Truck Costs (HCF=0.54)')
 
     # Plot 3PL Extra
     # plt.plot(x_3pl_extra, y_3pl_extra, marker='^', linestyle='-', color='red', label=f'3PL Costs (HCF={HCF})')
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     # Adding labels and title
     plt.xlabel('Threshold')
     plt.ylabel('Avg Cost (per day)')
-    plt.title('Avg Costs: 3PL vs. Trucks')
+    plt.title('Avg Costs: 3PL')
 
     # Add a legend to differentiate the plots
     plt.legend()
@@ -165,3 +165,25 @@ if __name__ == '__main__':
 
     # Display the plot
     plt.show()
+
+    # Q4
+    # markov_c = read_csv_to_2d_numpy_array(f'markov-chains/final_transition_matrix_correct.csv')
+    # print(markov_c.shape)
+    #
+    # q4_cost_3pl = total_cost_3pl(
+    #     markov_chains=[markov_c],
+    #     vc_factor=VARIABLE_COST_FACTOR,
+    #     fixed_cost=FIXED_COST_3PL,
+    #     hc_factor=HOLDING_COST_FACTOR,
+    # )
+    #
+    # q4_cost_trucks = total_cost_truck(
+    #     markov_chains=[markov_c],
+    #     tc_900=tc_900,
+    #     tc_1800=tc_1800,
+    #     hc_factor=HOLDING_COST_FACTOR,
+    # )
+    #
+    # print(q4_cost_3pl, "\n\n\n")
+    # print(q4_cost_trucks)
+
